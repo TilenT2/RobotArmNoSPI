@@ -30,12 +30,18 @@ void Parse_Command(const char *cmd) {
         if(motor_num >= 1 && motor_num <= 7) {
             HAL_GPIO_WritePin(my_motors[motor_num-1].enable_port,
                             my_motors[motor_num-1].enable_pin, GPIO_PIN_RESET);
+            USB_Send_Response("ENABLED\n");
         }
     }
     else if(sscanf(cmd, "D%d", &motor_num) == 1) {
         if(motor_num >= 1 && motor_num <= 7) {
             HAL_GPIO_WritePin(my_motors[motor_num-1].enable_port,
                             my_motors[motor_num-1].enable_pin, GPIO_PIN_SET);
+            USB_Send_Response("DISABLED\n");
         }
     }
+    else {
+		USB_Send_Response("INVALID COMMAND YOU DIPSHIT\n");
+
+	}
 }

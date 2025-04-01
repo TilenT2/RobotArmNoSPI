@@ -45,12 +45,13 @@ void Motor_Set_Target_Degrees(Motor_TypeDef *motor, float degrees) {
 
 void Motor_Start(Motor_TypeDef *motor) {
     if(motor->target_pulses == 0) return;
-
+    USB_Send_Response("MOVING\n");
     HAL_GPIO_WritePin(motor->dir_port, motor->dir_pin, motor->direction);
 
     motor->is_moving = 1;
     HAL_TIM_PWM_Start(motor->timer, motor->channel);
     HAL_TIM_Base_Start_IT(motor->timer);
+
 }
 
 

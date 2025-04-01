@@ -244,7 +244,8 @@ static void MX_TIM1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM1_Init 2 */
-
+  HAL_NVIC_SetPriority(TIM1_UP_TIM10_IRQn, 1, 0);   // Set priority for TIM2 global interrupt
+  HAL_NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);           // Enable TIM2 global interrupt in NVIC
   /* USER CODE END TIM1_Init 2 */
   HAL_TIM_MspPostInit(&htim1);
 
