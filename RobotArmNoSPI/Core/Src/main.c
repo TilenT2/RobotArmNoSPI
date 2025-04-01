@@ -19,7 +19,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "usb_device.h"
-
+#include "usb.h"
+#include "motor_control.h"
+#include "command_parser.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -27,7 +29,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+Motor_TypeDef my_motor;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -94,30 +96,25 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_TIM_Base_Start_IT(&htim2);
+  Motor_Init(&my_motor, &htim2, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
-  HAL_Delay(1000);
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
 
-	  if (pulseCount >= targetPulses){
-		  	  HAL_Delay(1000); // Delay for 0.1 second
-	  	      // Reset counter and restart timer
-	  	      pulseCount = 0;
+	  if (!my_motor.is_moving) {
+		  USB_Process_Received_Data();
+		}
 
-	  	      // Restart the timer and PWM
-	  	      HAL_TIM_Base_Start_IT(&htim2);
-	  	      HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-	  	    }
-
+  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+
+  	/* USER CODE END 3 */
 }
 
 /**
@@ -141,8 +138,8 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 25;
-  RCC_OscInitStruct.PLL.PLLN = 192;
+  RCC_OscInitStruct.PLL.PLLM = 10;
+  RCC_OscInitStruct.PLL.PLLN = 96;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV6;
   RCC_OscInitStruct.PLL.PLLQ = 4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -156,7 +153,7 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
@@ -208,7 +205,7 @@ static void MX_TIM2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM2_Init 2 */
-  HAL_NVIC_SetPriority(TIM2_IRQn, 0, 0);   // Set priority for TIM2 global interrupt
+  HAL_NVIC_SetPriority(TIM2_IRQn, 1, 0);   // Set priority for TIM2 global interrupt
   HAL_NVIC_EnableIRQ(TIM2_IRQn);           // Enable TIM2 global interrupt in NVIC
   /* USER CODE END TIM2_Init 2 */
   HAL_TIM_MspPostInit(&htim2);
@@ -267,21 +264,10 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-  if(htim->Instance == TIM2)
-  {
-    pulseCount++;
-    if(pulseCount >= targetPulses)
-    {
-      HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_1);
-      HAL_TIM_Base_Stop_IT(&htim2);
-
-    }
-
-
-  }
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	Motor_TIM_Interrupt_Handler(htim);
 }
+
 /* USER CODE END 4 */
 
 /**
