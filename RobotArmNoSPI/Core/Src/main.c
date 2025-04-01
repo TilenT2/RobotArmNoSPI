@@ -29,7 +29,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-Motor_TypeDef my_motor;
+Motor_TypeDef my_motors[7];
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -47,8 +47,7 @@ TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-uint32_t pulseCount = 0;
-uint32_t targetPulses = 51200; // Number of pulses to generate
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -99,7 +98,14 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  Motor_Init(&my_motor, &htim2, TIM_CHANNEL_1);
+  Motor_Init(&my_motors[0], &htim2, TIM_CHANNEL_1, DIR1_GPIO_Port, DIR1_Pin, ENABLE1_GPIO_Port, ENABLE1_Pin);
+  Motor_Init(&my_motors[1], &htim2, TIM_CHANNEL_2, DIR2_GPIO_Port, DIR2_Pin, ENABLE2_GPIO_Port, ENABLE2_Pin);
+  Motor_Init(&my_motors[2], &htim2, TIM_CHANNEL_3, DIR3_GPIO_Port, DIR3_Pin, ENABLE3_GPIO_Port, ENABLE3_Pin);
+  Motor_Init(&my_motors[3], &htim2, TIM_CHANNEL_4, DIR4_GPIO_Port, DIR4_Pin, ENABLE4_GPIO_Port, ENABLE4_Pin);
+  Motor_Init(&my_motors[4], &htim1, TIM_CHANNEL_1, DIR5_GPIO_Port, DIR5_Pin, ENABLE5_GPIO_Port, ENABLE5_Pin);
+  Motor_Init(&my_motors[5], &htim1, TIM_CHANNEL_2, DIR6_GPIO_Port, DIR6_Pin, ENABLE6_GPIO_Port, ENABLE6_Pin);
+  Motor_Init(&my_motors[6], &htim1, TIM_CHANNEL_3, DIR7_GPIO_Port, DIR7_Pin, ENABLE7_GPIO_Port, ENABLE7_Pin);
+
 
   /* USER CODE END 2 */
 
@@ -108,10 +114,16 @@ int main(void)
   while (1)
   {
 
-	  if (!my_motor.is_moving) {
-		  USB_Process_Received_Data();
-		}
-
+	  int8_t any_moving = 0;
+	      for(int i = 0; i < 7; i++) {
+	          if(my_motors[i].is_moving) {
+	              any_moving = 1;
+	              break;
+	          }
+	          if(!any_moving) {
+	                  USB_Process_Received_Data();
+	              }
+	      }
   }
     /* USER CODE END WHILE */
 
@@ -185,9 +197,9 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 0;
+  htim1.Init.Prescaler = 6;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 65535;
+  htim1.Init.Period = 77;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -202,7 +214,7 @@ static void MX_TIM1_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 0;
+  sConfigOC.Pulse = 77/2;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
@@ -280,7 +292,6 @@ static void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
-  sConfigOC.Pulse = 0;
   if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();

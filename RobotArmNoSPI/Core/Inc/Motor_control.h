@@ -13,6 +13,10 @@
 typedef struct {
     TIM_HandleTypeDef *timer;
     uint32_t channel;
+    GPIO_TypeDef* dir_port;
+    uint16_t dir_pin;
+    GPIO_TypeDef* enable_port;
+    uint16_t enable_pin;
     volatile int32_t current_pulses;
     volatile int32_t target_pulses;
     uint8_t is_moving;
@@ -21,10 +25,12 @@ typedef struct {
 
 
 
-extern Motor_TypeDef my_motor;
+extern Motor_TypeDef my_motors[7];
 
 
-void Motor_Init(Motor_TypeDef *motor, TIM_HandleTypeDef *timer, uint32_t channel);
+void Motor_Init(Motor_TypeDef *motor, TIM_HandleTypeDef *timer, uint32_t channel,
+				GPIO_TypeDef* dir_port, uint16_t dir_pin,
+				GPIO_TypeDef* enable_port, uint16_t enable_pin);
 
 void Motor_Set_Target_Degrees(Motor_TypeDef *motor, float degrees);
 

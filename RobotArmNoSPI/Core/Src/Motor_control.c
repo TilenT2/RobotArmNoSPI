@@ -14,14 +14,20 @@
 
 
 
-void Motor_Init(Motor_TypeDef *motor, TIM_HandleTypeDef *timer, uint32_t channel) {
+void Motor_Init(Motor_TypeDef *motor, TIM_HandleTypeDef *timer, uint32_t channel,
+                GPIO_TypeDef* dir_port, uint16_t dir_pin,
+                GPIO_TypeDef* enable_port, uint16_t enable_pin) {
     motor->timer = timer;
     motor->channel = channel;
+    motor->dir_port = dir_port;
+    motor->dir_pin = dir_pin;
+    motor->enable_port = enable_port;
+    motor->enable_pin = enable_pin;
     motor->current_pulses = 0;
     motor->target_pulses = 0;
     motor->is_moving = 0;
     motor->direction = 0;
-    HAL_GPIO_WritePin(DIR1_GPIO_Port, DIR1_Pin, GPIO_PIN_RESET);
+    // HAL_GPIO_WritePin(DIR1_GPIO_Port, DIR1_Pin, GPIO_PIN_RESET);
 }
 
 
@@ -40,7 +46,7 @@ void Motor_Set_Target_Degrees(Motor_TypeDef *motor, float degrees) {
 void Motor_Start(Motor_TypeDef *motor) {
     if(motor->target_pulses == 0) return;
 
-    HAL_GPIO_WritePin(DIR1_GPIO_Port, DIR1_Pin, motor->direction ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(motor->dir_port, motor->dir_pin, motor->direction);
 
     motor->is_moving = 1;
     HAL_TIM_PWM_Start(motor->timer, motor->channel);
@@ -59,13 +65,14 @@ void Motor_Stop(Motor_TypeDef *motor) {
 
 
 void Motor_TIM_Interrupt_Handler(TIM_HandleTypeDef *htim) {
-    if(htim->Instance == TIM2) {
-        if(my_motor.is_moving) {  // Use the global instance
-            my_motor.current_pulses++;
-
-            if(my_motor.current_pulses >= my_motor.target_pulses) {
-                Motor_Stop(&my_motor);
-                USB_Send_Response("DONE\n");  // Optional confirmation
+    for(int i = 0; i < 7; i++) {
+        if(htim->Instance == my_motors[i].timer->Instance) {
+            if(my_motors[i].is_moving) {
+                my_motors[i].current_pulses++;
+                if(my_motors[i].current_pulses >= my_motors[i].target_pulses) {
+                    Motor_Stop(&my_motors[i]);
+                    USB_Send_Response("DONE\n");
+                }
             }
         }
     }
