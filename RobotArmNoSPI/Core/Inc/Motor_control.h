@@ -16,6 +16,7 @@ typedef struct {
     volatile int32_t current_pulses;
     volatile int32_t target_pulses;
     uint8_t is_moving;
+    uint8_t direction;
 } Motor_TypeDef;
 
 

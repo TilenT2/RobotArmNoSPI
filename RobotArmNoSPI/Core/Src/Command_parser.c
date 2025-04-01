@@ -9,12 +9,18 @@
 #include "usb.h"
 #include <stdio.h>
 #include "motor_control.h"
+#include "main.h"
 
 extern Motor_TypeDef my_motor;
+
+
+//M1-7 Number
 
 void Parse_Command(const char *cmd) {
     int motor;
     float degrees;
+
+
 
     if(sscanf(cmd, "M%d %f", &motor, &degrees) == 2) {
         if(motor >= 1 && motor <= 7) {
@@ -23,7 +29,20 @@ void Parse_Command(const char *cmd) {
         	Motor_Start(&my_motor);
             USB_Send_Response("MOVING\n");
         }
-    } else {
-        USB_Send_Response("ERR\n");
     }
+	if (sscanf(cmd, "E%d", &motor) == 1) {
+		if (motor >= 1 && motor <= 7) {
+			HAL_GPIO_WritePin(ENABLE1_GPIO_Port, ENABLE1_Pin, GPIO_PIN_RESET);
+			USB_Send_Response("MOTOR ENABLED\n");
+		}
+	}
+	if (sscanf(cmd, "D%d", &motor) == 1) {
+		if (motor >= 1 && motor <= 7) {
+			HAL_GPIO_WritePin(ENABLE1_GPIO_Port, ENABLE1_Pin, GPIO_PIN_SET);
+			USB_Send_Response("MOTOR DISABLED\n");
+		}
+	}
+
+
+
 }
